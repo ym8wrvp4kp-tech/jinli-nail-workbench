@@ -1343,6 +1343,16 @@ const Store = {
 };
 
 function initDefaultData() {
+    // 版本号：每次更新数据结构时递增，强制刷新数据
+    const DATA_VERSION = '4';
+    const storedVersion = localStorage.getItem('jinli_data_version');
+    if (storedVersion !== DATA_VERSION) {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('jinli_')) localStorage.removeItem(key);
+        });
+        localStorage.setItem('jinli_data_version', DATA_VERSION);
+    }
+
     if (!Store.get('members')) {
         Store.set('members', [
             { id: 1, name: 'aa', phone: '138****1234', wechat: 'aa1234', recharge: 5000, gift: 500, discount: 0.9, balance: 4642, consumptionCount: 1, records: [
@@ -1406,6 +1416,15 @@ function initDefaultData() {
             revenue: 0, appointments: 0, completed: 0, newCustomers: 1,
             todayArrived: 0, completionRate: 0, avgPrice: 0, hotTime: '-', hotProject: '-', pending: 0
         });
+    }
+    if (!Store.get('summaryData')) {
+        Store.set('summaryData', [
+            { id: 1, name: '预约数', today: '0', month: '7', year: '7' },
+            { id: 2, name: '已完成', today: '0', month: '0', year: '0' },
+            { id: 3, name: '营收', today: '¥0', month: '¥0', year: '¥0' },
+            { id: 4, name: '新客', today: '0', month: '2', year: '2' },
+            { id: 5, name: '客单价', today: '¥0', month: '¥0', year: '¥0' }
+        ]);
     }
 }
 
@@ -2504,18 +2523,11 @@ function renderDataAnalysis(container) {
             </div>
 
             <div class="card">
-                <div class="card-header"><h3>业绩汇总</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>业绩汇总</h3><button class="btn btn-sm btn-primary" onclick="window.openSummaryAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
                 <div class="card-body">
-                    <table class="data-table">
-                        <thead><tr><th>统计项</th><th>今日</th><th>本月</th><th>本年</th></tr></thead>
-                        <tbody>
-                            <tr><td>预约数</td><td>${todayApps.length}</td><td>${monthApps.length}</td><td>${yearApps.length}</td></tr>
-                            <tr><td>已完成</td><td>${todayApps.filter(a => a.status === 'done').length}</td><td>${monthApps.filter(a => a.status === 'done').length}</td><td>${yearApps.filter(a => a.status === 'done').length}</td></tr>
-                            <tr><td>营收</td><td>¥${todayRevenue}</td><td>¥${monthRevenue}</td><td>¥${yearRevenue}</td></tr>
-                            <tr><td>新客</td><td>${todayApps.filter(a => a.isNew).length}</td><td>${monthApps.filter(a => a.isNew).length}</td><td>${yearApps.filter(a => a.isNew).length}</td></tr>
-                            <tr><td>客单价</td><td>¥${todayApps.filter(a => a.status === 'done').length > 0 ? Math.round(todayRevenue / todayApps.filter(a => a.status === 'done').length) : 0}</td><td>¥${monthApps.filter(a => a.status === 'done').length > 0 ? Math.round(monthRevenue / monthApps.filter(a => a.status === 'done').length) : 0}</td><td>¥${yearApps.filter(a => a.status === 'done').length > 0 ? Math.round(yearRevenue / yearApps.filter(a => a.status === 'done').length) : 0}</td></tr>
-                        </tbody>
-                    </table>
+                    <div id="summaryTable">
+                        ${renderSummaryTable()}
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -2679,6 +2691,101 @@ window.deleteAnalysisItem = function(id) {
     Store.set('appointments', appointments);
     showToast('已删除');
     renderDataAnalysis(document.getElementById('contentArea'));
+};
+
+// ==================== 业绩汇总（可编辑） ====================
+function renderSummaryTable() {
+    const summary = Store.get('summaryData', []);
+    if (summary.length === 0) return '<div class="empty-state"><p>暂无数据，点击右上角添加</p></div>';
+    return `<div class="table-wrapper"><table class="data-table"><thead><tr><th>统计项</th><th>今日</th><th>本月</th><th>本年</th><th>操作</th></tr></thead><tbody>${summary.map(s => `<tr><td>${s.name}</td><td>${s.today}</td><td>${s.month}</td><td>${s.year}</td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="window.openSummaryEditModal(${s.id})">编辑</button><button class="btn btn-sm btn-danger" onclick="window.deleteSummaryItem(${s.id})" style="margin-left:4px">删除</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+window.openSummaryAddModal = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'summaryAddModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header"><h3>添加统计项</h3><button class="close-btn" onclick="closeModal('summaryAddModal')">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:12px"><label>统计项名称</label><input type="text" id="saName" value="" placeholder="如：预约数、营收等"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>今日</label><input type="text" id="saToday" value="" placeholder="如：5 或 ¥500"></div>
+                    <div class="form-group"><label>本月</label><input type="text" id="saMonth" value="" placeholder="如：120 或 ¥12000"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>本年</label><input type="text" id="saYear" value="" placeholder="如：800 或 ¥80000"></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('summaryAddModal')">取消</button><button class="btn btn-primary" onclick="window.saveSummaryAdd()">保存</button></div>
+        </div>`;
+    document.body.appendChild(modal);
+};
+
+window.saveSummaryAdd = function() {
+    const name = document.getElementById('saName').value.trim();
+    const today = document.getElementById('saToday').value.trim();
+    const month = document.getElementById('saMonth').value.trim();
+    const year = document.getElementById('saYear').value.trim();
+    if (!name) { showToast('请输入统计项名称'); return; }
+    let summary = Store.get('summaryData', []);
+    const newId = summary.length > 0 ? Math.max(...summary.map(s => s.id)) + 1 : 1;
+    summary.push({ id: newId, name, today, month, year });
+    Store.set('summaryData', summary);
+    showToast('已添加');
+    closeModal('summaryAddModal');
+    document.getElementById('summaryTable').innerHTML = renderSummaryTable();
+};
+
+window.openSummaryEditModal = function(id) {
+    const summary = Store.get('summaryData', []);
+    const item = summary.find(s => s.id === id);
+    if (!item) return;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'summaryEditModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header"><h3>编辑统计项</h3><button class="close-btn" onclick="closeModal('summaryEditModal')">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:12px"><label>统计项名称</label><input type="text" id="seName" value="${item.name}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>今日</label><input type="text" id="seToday" value="${item.today}"></div>
+                    <div class="form-group"><label>本月</label><input type="text" id="seMonth" value="${item.month}"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>本年</label><input type="text" id="seYear" value="${item.year}"></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('summaryEditModal')">取消</button><button class="btn btn-primary" onclick="window.saveSummaryEdit(${id})">保存</button></div>
+        </div>`;
+    document.body.appendChild(modal);
+};
+
+window.saveSummaryEdit = function(id) {
+    const name = document.getElementById('seName').value.trim();
+    const today = document.getElementById('seToday').value.trim();
+    const month = document.getElementById('seMonth').value.trim();
+    const year = document.getElementById('seYear').value.trim();
+    if (!name) { showToast('请输入统计项名称'); return; }
+    let summary = Store.get('summaryData', []);
+    const idx = summary.findIndex(s => s.id === id);
+    if (idx >= 0) {
+        summary[idx] = { ...summary[idx], name, today, month, year };
+        Store.set('summaryData', summary);
+        showToast('已保存');
+        closeModal('summaryEditModal');
+        document.getElementById('summaryTable').innerHTML = renderSummaryTable();
+    }
+};
+
+window.deleteSummaryItem = function(id) {
+    if (!confirm('确定要删除这条统计项吗？')) return;
+    let summary = Store.get('summaryData', []);
+    summary = summary.filter(s => s.id !== id);
+    Store.set('summaryData', summary);
+    showToast('已删除');
+    document.getElementById('summaryTable').innerHTML = renderSummaryTable();
 };
 
 // ==================== 初始化 ====================
