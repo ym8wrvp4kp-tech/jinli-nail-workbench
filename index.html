@@ -469,9 +469,14 @@
             border-collapse: collapse;
         }
 
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .data-table th,
         .data-table td {
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: left;
             font-size: 13px;
             border-bottom: 1px solid var(--border);
@@ -2485,7 +2490,7 @@ function renderDataAnalysis(container) {
             </div>
 
             <div class="card" style="margin-bottom:20px">
-                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>营收明细</h3><button class="btn btn-sm btn-primary" onclick="openAnalysisAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>营收明细</h3><button class="btn btn-sm btn-primary" onclick="window.openAnalysisAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
                 <div class="card-body">
                     <div class="tab-group">
                         <button class="tab-btn active" onclick="switchAnalysisTab(this, 'today')">今日</button>
@@ -2519,7 +2524,7 @@ function renderDataAnalysis(container) {
 function renderAnalysisTable(apps) {
     if (apps.length === 0) return '<div class="empty-state"><p>暂无数据</p></div>';
     const staffList = Store.get('staff', []).map(s => s.name);
-    return `<table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.staff || '-'}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnalysisStatus(${a.id})">${a.status === 'done' ? '标为待处理' : '标为完成'}</button><button class="btn btn-sm btn-danger" onclick="deleteAnalysisItem(${a.id})">删除</button></td></tr>`).join('')}</tbody></table>`;
+    return `<div class="table-wrapper"><table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.staff || '-'}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="window.openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="window.toggleAnalysisStatus(${a.id})" style="margin-left:4px">${a.status === 'done' ? '待处理' : '完成'}</button><button class="btn btn-sm btn-danger" onclick="window.deleteAnalysisItem(${a.id})" style="margin-left:4px">删除</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 window.switchAnalysisTab = function(btn, type) {
@@ -2589,7 +2594,7 @@ window.openAnalysisEditModal = function(id) {
                     <div class="form-group"><label>状态</label><select id="aeStatus"><option value="pending" ${app.status === 'pending' ? 'selected' : ''}>待处理</option><option value="done" ${app.status === 'done' ? 'selected' : ''}>已完成</option></select></div>
                 </div>
             </div>
-            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisEditModal')">取消</button><button class="btn btn-primary" onclick="saveAnalysisEdit(${id})">保存</button></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisEditModal')">取消</button><button class="btn btn-primary" onclick="window.saveAnalysisEdit(${id})">保存</button></div>
         </div>`;
     document.body.appendChild(modal);
 };
@@ -2643,7 +2648,7 @@ window.openAnalysisAddModal = function() {
                     <div class="form-group"><label>状态</label><select id="aaStatus"><option value="pending">待处理</option><option value="done">已完成</option></select></div>
                 </div>
             </div>
-            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisAddModal')">取消</button><button class="btn btn-primary" onclick="saveAnalysisAdd()">保存</button></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisAddModal')">取消</button><button class="btn btn-primary" onclick="window.saveAnalysisAdd()">保存</button></div>
         </div>`;
     document.body.appendChild(modal);
 };
