@@ -312,6 +312,40 @@
             overflow: hidden;
         }
 
+        .card-body-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px;
+        }
+
+        .inline-input, .inline-select {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 4px 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        .inline-input:focus, .inline-select:focus {
+            border-color: var(--primary);
+            background: var(--bg-white);
+            outline: none;
+        }
+        .inline-select {
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .inline-input[type="number"] {
+            width: 70px;
+        }
+        .inline-input[type="date"], .inline-input[type="time"] {
+            width: auto;
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+
         .card-header {
             padding: 16px 20px;
             border-bottom: 1px solid var(--border);
@@ -472,6 +506,12 @@
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            display: block;
+            width: 100%;
+        }
+
+        .table-wrapper .data-table {
+            min-width: 700px;
         }
 
         .data-table th,
@@ -2523,11 +2563,18 @@ function renderDataAnalysis(container) {
             </div>
 
             <div class="card">
-                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>业绩汇总</h3><button class="btn btn-sm btn-primary" onclick="window.openSummaryAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
+                <div class="card-header"><h3>业绩汇总</h3></div>
                 <div class="card-body">
-                    <div id="summaryTable">
-                        ${renderSummaryTable()}
-                    </div>
+                    <table class="data-table">
+                        <thead><tr><th>统计项</th><th>今日</th><th>本月</th><th>本年</th></tr></thead>
+                        <tbody>
+                            <tr><td>预约数</td><td>${todayApps.length}</td><td>${monthApps.length}</td><td>${yearApps.length}</td></tr>
+                            <tr><td>已完成</td><td>${todayApps.filter(a => a.status === 'done').length}</td><td>${monthApps.filter(a => a.status === 'done').length}</td><td>${yearApps.filter(a => a.status === 'done').length}</td></tr>
+                            <tr><td>营收</td><td>¥${todayRevenue}</td><td>¥${monthRevenue}</td><td>¥${yearRevenue}</td></tr>
+                            <tr><td>新客</td><td>${todayApps.filter(a => a.isNew).length}</td><td>${monthApps.filter(a => a.isNew).length}</td><td>${yearApps.filter(a => a.isNew).length}</td></tr>
+                            <tr><td>客单价</td><td>¥${todayApps.filter(a => a.status === 'done').length > 0 ? Math.round(todayRevenue / todayApps.filter(a => a.status === 'done').length) : 0}</td><td>¥${monthApps.filter(a => a.status === 'done').length > 0 ? Math.round(monthRevenue / monthApps.filter(a => a.status === 'done').length) : 0}</td><td>¥${yearApps.filter(a => a.status === 'done').length > 0 ? Math.round(yearRevenue / yearApps.filter(a => a.status === 'done').length) : 0}</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>`;
@@ -2536,7 +2583,19 @@ function renderDataAnalysis(container) {
 function renderAnalysisTable(apps) {
     if (apps.length === 0) return '<div class="empty-state"><p>暂无数据</p></div>';
     const staffList = Store.get('staff', []).map(s => s.name);
-    return `<div class="table-wrapper"><table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.staff || '-'}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="window.openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="window.toggleAnalysisStatus(${a.id})" style="margin-left:4px">${a.status === 'done' ? '待处理' : '完成'}</button><button class="btn btn-sm btn-danger" onclick="window.deleteAnalysisItem(${a.id})" style="margin-left:4px">删除</button></td></tr>`).join('')}</tbody></table></div>`;
+    const projectOptions = ['本甲','甲片','足部','美睫','卸甲卸睫','护理','其他'].map(p => `<option value="${p}">${p}</option>`).join('');
+    const platformOptions = ['微信','小红书','抖音','大众点评','美团','其他'].map(p => `<option value="${p}">${p}</option>`).join('');
+    const staffOptions = staffList.map(s => `<option value="${s}">${s}</option>`).join('');
+    return `<div class="table-wrapper"><table class="data-table" style="min-width:720px"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr data-id="${a.id}">
+<td><input type="date" class="inline-input" value="${a.date}" onchange="window.inlineEdit(${a.id},'date',this.value)"><input type="time" class="inline-input" value="${a.time}" onchange="window.inlineEdit(${a.id},'time',this.value)" style="margin-top:2px"></td>
+<td><input type="text" class="inline-input" value="${a.name}" onchange="window.inlineEdit(${a.id},'name',this.value)"></td>
+<td><select class="inline-select" onchange="window.inlineEdit(${a.id},'project',this.value)">${projectOptions.replace(`value="${a.project}"`,`value="${a.project}" selected`)}</select></td>
+<td><select class="inline-select" onchange="window.inlineEdit(${a.id},'staff',this.value)"><option value="">-</option>${staffOptions.replace(`value="${a.staff}"`,`value="${a.staff}" selected`)}</select></td>
+<td><select class="inline-select" onchange="window.inlineEdit(${a.id},'platform',this.value)">${platformOptions.replace(`value="${a.platform}"`,`value="${a.platform}" selected`)}</select></td>
+<td><input type="number" class="inline-input" value="${a.amount}" onchange="window.inlineEdit(${a.id},'amount',this.value)"></td>
+<td><select class="inline-select" onchange="window.inlineEdit(${a.id},'status',this.value)"><option value="pending" ${a.status==='pending'?'selected':''}>待处理</option><option value="done" ${a.status==='done'?'selected':''}>已完成</option></select></td>
+<td style="white-space:nowrap"><button class="btn btn-sm btn-danger" onclick="window.deleteAnalysisItem(${a.id})">删除</button></td>
+</tr>`).join('')}</tbody></table></div>`;
 }
 
 window.switchAnalysisTab = function(btn, type) {
@@ -2691,6 +2750,19 @@ window.deleteAnalysisItem = function(id) {
     Store.set('appointments', appointments);
     showToast('已删除');
     renderDataAnalysis(document.getElementById('contentArea'));
+};
+
+window.inlineEdit = function(id, field, value) {
+    let appointments = Store.get('appointments', []);
+    const idx = appointments.findIndex(a => a.id === id);
+    if (idx >= 0) {
+        if (field === 'amount') value = parseFloat(value) || 0;
+        appointments[idx][field] = value;
+        Store.set('appointments', appointments);
+        showToast('已修改');
+        // 刷新营收卡片和业绩汇总
+        renderDataAnalysis(document.getElementById('contentArea'));
+    }
 };
 
 // ==================== 业绩汇总（可编辑） ====================
