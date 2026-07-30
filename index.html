@@ -29,7 +29,7 @@ const Store = {
 
 function initDefaultData() {
     // 版本号：每次更新数据结构时递增，强制刷新数据
-    const DATA_VERSION = '2';
+    const DATA_VERSION = '3';
     const storedVersion = localStorage.getItem('jinli_data_version');
     if (storedVersion !== DATA_VERSION) {
         // 版本不一致，清除旧数据
@@ -56,13 +56,13 @@ function initDefaultData() {
     }
     if (!Store.get('appointments')) {
         Store.set('appointments', [
-            { id: 1, name: 'uu', project: '甲片', date: '2026-08-01', time: '13:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 358, status: 'pending' },
-            { id: 2, name: '陈平', project: '美睫', date: '2026-08-02', time: '10:00', phone: '139****5678', wechat: 'chenping88', isNew: false, platform: '小红书', amount: 298, status: 'pending' },
-            { id: 3, name: 'aa', project: '本甲', date: '2026-08-03', time: '14:00', phone: '138****1234', wechat: 'aa1234', isNew: false, platform: '抖音', amount: 198, status: 'pending' },
-            { id: 4, name: '陆陆', project: '本甲', date: '2026-08-04', time: '15:00', phone: '136****3456', wechat: 'lulu666', isNew: false, platform: '微信', amount: 168, status: 'pending' },
-            { id: 5, name: '新客户A', project: '本甲', date: '2026-08-08', time: '11:00', phone: '135****7890', wechat: '', isNew: true, platform: '大众点评', amount: 168, status: 'pending' },
-            { id: 6, name: 'uu', project: '卸甲卸睫', date: '2026-08-12', time: '16:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 50, status: 'pending' },
-            { id: 7, name: '新客户B', project: '美睫', date: '2026-08-22', time: '10:30', phone: '133****2468', wechat: '', isNew: true, platform: '小红书', amount: 298, status: 'pending' }
+            { id: 1, name: 'uu', project: '甲片', date: '2026-08-01', time: '13:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 358, status: 'pending', staff: '佳佳' },
+            { id: 2, name: '陈平', project: '美睫', date: '2026-08-02', time: '10:00', phone: '139****5678', wechat: 'chenping88', isNew: false, platform: '小红书', amount: 298, status: 'pending', staff: '思思' },
+            { id: 3, name: 'aa', project: '本甲', date: '2026-08-03', time: '14:00', phone: '138****1234', wechat: 'aa1234', isNew: false, platform: '抖音', amount: 198, status: 'pending', staff: '佳佳' },
+            { id: 4, name: '陆陆', project: '本甲', date: '2026-08-04', time: '15:00', phone: '136****3456', wechat: 'lulu666', isNew: false, platform: '微信', amount: 168, status: 'pending', staff: '思思' },
+            { id: 5, name: '新客户A', project: '本甲', date: '2026-08-08', time: '11:00', phone: '135****7890', wechat: '', isNew: true, platform: '大众点评', amount: 168, status: 'pending', staff: '佳佳' },
+            { id: 6, name: 'uu', project: '卸甲卸睫', date: '2026-08-12', time: '16:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 50, status: 'pending', staff: '思思' },
+            { id: 7, name: '新客户B', project: '美睫', date: '2026-08-22', time: '10:30', phone: '133****2468', wechat: '', isNew: true, platform: '小红书', amount: 298, status: 'pending', staff: '佳佳' }
         ]);
     }
     if (!Store.get('staff')) {
@@ -1186,7 +1186,7 @@ function renderDataAnalysis(container) {
             </div>
 
             <div class="card" style="margin-bottom:20px">
-                <div class="card-header"><h3>营收明细</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>营收明细</h3><button class="btn btn-sm btn-primary" onclick="openAnalysisAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
                 <div class="card-body">
                     <div class="tab-group">
                         <button class="tab-btn active" onclick="switchAnalysisTab(this, 'today')">今日</button>
@@ -1219,7 +1219,8 @@ function renderDataAnalysis(container) {
 
 function renderAnalysisTable(apps) {
     if (apps.length === 0) return '<div class="empty-state"><p>暂无数据</p></div>';
-    return `<table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnalysisStatus(${a.id})">${a.status === 'done' ? '标为待处理' : '标为完成'}</button></td></tr>`).join('')}</tbody></table>`;
+    const staffList = Store.get('staff', []).map(s => s.name);
+    return `<table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.staff || '-'}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnalysisStatus(${a.id})">${a.status === 'done' ? '标为待处理' : '标为完成'}</button><button class="btn btn-sm btn-danger" onclick="deleteAnalysisItem(${a.id})">删除</button></td></tr>`).join('')}</tbody></table>`;
 }
 
 window.switchAnalysisTab = function(btn, type) {
@@ -1263,6 +1264,8 @@ window.openAnalysisEditModal = function(id) {
     const appointments = Store.get('appointments', []);
     const app = appointments.find(a => a.id === id);
     if (!app) return;
+    const staffList = Store.get('staff', []).map(s => s.name);
+    const staffOptions = staffList.map(s => `<option value="${s}" ${app.staff === s ? 'selected' : ''}>${s}</option>`).join('');
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
     modal.id = 'analysisEditModal';
@@ -1279,8 +1282,12 @@ window.openAnalysisEditModal = function(id) {
                     <div class="form-group"><label>时间</label><input type="time" id="aeTime" value="${app.time}"></div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group"><label>人员</label><select id="aeStaff"><option value="">-</option>${staffOptions}</select></div>
                     <div class="form-group"><label>平台</label><select id="aePlatform"><option value="微信" ${app.platform === '微信' ? 'selected' : ''}>微信</option><option value="小红书" ${app.platform === '小红书' ? 'selected' : ''}>小红书</option><option value="抖音" ${app.platform === '抖音' ? 'selected' : ''}>抖音</option><option value="大众点评" ${app.platform === '大众点评' ? 'selected' : ''}>大众点评</option><option value="美团" ${app.platform === '美团' ? 'selected' : ''}>美团</option><option value="其他" ${app.platform === '其他' ? 'selected' : ''}>其他</option></select></div>
+                </div>
+                <div class="form-row">
                     <div class="form-group"><label>金额 (¥)</label><input type="number" id="aeAmount" value="${app.amount}"></div>
+                    <div class="form-group"><label>状态</label><select id="aeStatus"><option value="pending" ${app.status === 'pending' ? 'selected' : ''}>待处理</option><option value="done" ${app.status === 'done' ? 'selected' : ''}>已完成</option></select></div>
                 </div>
             </div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisEditModal')">取消</button><button class="btn btn-primary" onclick="saveAnalysisEdit(${id})">保存</button></div>
@@ -1293,13 +1300,15 @@ window.saveAnalysisEdit = function(id) {
     const project = document.getElementById('aeProject').value;
     const date = document.getElementById('aeDate').value;
     const time = document.getElementById('aeTime').value;
+    const staff = document.getElementById('aeStaff').value;
     const platform = document.getElementById('aePlatform').value;
     const amount = parseFloat(document.getElementById('aeAmount').value) || 0;
+    const status = document.getElementById('aeStatus').value;
     if (!name) { showToast('请输入姓名'); return; }
     let appointments = Store.get('appointments', []);
     const idx = appointments.findIndex(a => a.id === id);
     if (idx >= 0) {
-        appointments[idx] = { ...appointments[idx], name, project, date, time, platform, amount };
+        appointments[idx] = { ...appointments[idx], name, project, date, time, staff, platform, amount, status };
         Store.set('appointments', appointments);
         showToast('已保存');
         closeModal('analysisEditModal');
@@ -2678,13 +2687,13 @@ function initDefaultData() {
     }
     if (!Store.get('appointments')) {
         Store.set('appointments', [
-            { id: 1, name: 'uu', project: '甲片', date: '2026-08-01', time: '13:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 358, status: 'pending' },
-            { id: 2, name: '陈平', project: '美睫', date: '2026-08-02', time: '10:00', phone: '139****5678', wechat: 'chenping88', isNew: false, platform: '小红书', amount: 298, status: 'pending' },
-            { id: 3, name: 'aa', project: '本甲', date: '2026-08-03', time: '14:00', phone: '138****1234', wechat: 'aa1234', isNew: false, platform: '抖音', amount: 198, status: 'pending' },
-            { id: 4, name: '陆陆', project: '本甲', date: '2026-08-04', time: '15:00', phone: '136****3456', wechat: 'lulu666', isNew: false, platform: '微信', amount: 168, status: 'pending' },
-            { id: 5, name: '新客户A', project: '本甲', date: '2026-08-08', time: '11:00', phone: '135****7890', wechat: '', isNew: true, platform: '大众点评', amount: 168, status: 'pending' },
-            { id: 6, name: 'uu', project: '卸甲卸睫', date: '2026-08-12', time: '16:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 50, status: 'pending' },
-            { id: 7, name: '新客户B', project: '美睫', date: '2026-08-22', time: '10:30', phone: '133****2468', wechat: '', isNew: true, platform: '小红书', amount: 298, status: 'pending' }
+            { id: 1, name: 'uu', project: '甲片', date: '2026-08-01', time: '13:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 358, status: 'pending', staff: '佳佳' },
+            { id: 2, name: '陈平', project: '美睫', date: '2026-08-02', time: '10:00', phone: '139****5678', wechat: 'chenping88', isNew: false, platform: '小红书', amount: 298, status: 'pending', staff: '思思' },
+            { id: 3, name: 'aa', project: '本甲', date: '2026-08-03', time: '14:00', phone: '138****1234', wechat: 'aa1234', isNew: false, platform: '抖音', amount: 198, status: 'pending', staff: '佳佳' },
+            { id: 4, name: '陆陆', project: '本甲', date: '2026-08-04', time: '15:00', phone: '136****3456', wechat: 'lulu666', isNew: false, platform: '微信', amount: 168, status: 'pending', staff: '思思' },
+            { id: 5, name: '新客户A', project: '本甲', date: '2026-08-08', time: '11:00', phone: '135****7890', wechat: '', isNew: true, platform: '大众点评', amount: 168, status: 'pending', staff: '佳佳' },
+            { id: 6, name: 'uu', project: '卸甲卸睫', date: '2026-08-12', time: '16:00', phone: '137****9012', wechat: 'uu_nail', isNew: false, platform: '微信', amount: 50, status: 'pending', staff: '思思' },
+            { id: 7, name: '新客户B', project: '美睫', date: '2026-08-22', time: '10:30', phone: '133****2468', wechat: '', isNew: true, platform: '小红书', amount: 298, status: 'pending', staff: '佳佳' }
         ]);
     }
     if (!Store.get('staff')) {
@@ -3808,7 +3817,7 @@ function renderDataAnalysis(container) {
             </div>
 
             <div class="card" style="margin-bottom:20px">
-                <div class="card-header"><h3>营收明细</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h3>营收明细</h3><button class="btn btn-sm btn-primary" onclick="openAnalysisAddModal()"><i class="fas fa-plus"></i> 添加</button></div>
                 <div class="card-body">
                     <div class="tab-group">
                         <button class="tab-btn active" onclick="switchAnalysisTab(this, 'today')">今日</button>
@@ -3841,7 +3850,8 @@ function renderDataAnalysis(container) {
 
 function renderAnalysisTable(apps) {
     if (apps.length === 0) return '<div class="empty-state"><p>暂无数据</p></div>';
-    return `<table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnalysisStatus(${a.id})">${a.status === 'done' ? '标为待处理' : '标为完成'}</button></td></tr>`).join('')}</tbody></table>`;
+    const staffList = Store.get('staff', []).map(s => s.name);
+    return `<table class="data-table"><thead><tr><th>日期</th><th>顾客</th><th>项目</th><th>人员</th><th>平台</th><th>金额</th><th>状态</th><th>操作</th></tr></thead><tbody>${apps.map(a => `<tr><td>${a.date} ${a.time}</td><td>${a.name}</td><td>${a.project}</td><td>${a.staff || '-'}</td><td>${a.platform}</td><td>¥${a.amount}</td><td><span class="badge ${a.status === 'done' ? 'badge-success' : 'badge-primary'}">${a.status === 'done' ? '已完成' : '待处理'}</span></td><td style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="openAnalysisEditModal(${a.id})">编辑</button><button class="btn btn-sm ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnalysisStatus(${a.id})">${a.status === 'done' ? '标为待处理' : '标为完成'}</button><button class="btn btn-sm btn-danger" onclick="deleteAnalysisItem(${a.id})">删除</button></td></tr>`).join('')}</tbody></table>`;
 }
 
 window.switchAnalysisTab = function(btn, type) {
@@ -3885,6 +3895,8 @@ window.openAnalysisEditModal = function(id) {
     const appointments = Store.get('appointments', []);
     const app = appointments.find(a => a.id === id);
     if (!app) return;
+    const staffList = Store.get('staff', []).map(s => s.name);
+    const staffOptions = staffList.map(s => `<option value="${s}" ${app.staff === s ? 'selected' : ''}>${s}</option>`).join('');
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
     modal.id = 'analysisEditModal';
@@ -3901,8 +3913,12 @@ window.openAnalysisEditModal = function(id) {
                     <div class="form-group"><label>时间</label><input type="time" id="aeTime" value="${app.time}"></div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group"><label>人员</label><select id="aeStaff"><option value="">-</option>${staffOptions}</select></div>
                     <div class="form-group"><label>平台</label><select id="aePlatform"><option value="微信" ${app.platform === '微信' ? 'selected' : ''}>微信</option><option value="小红书" ${app.platform === '小红书' ? 'selected' : ''}>小红书</option><option value="抖音" ${app.platform === '抖音' ? 'selected' : ''}>抖音</option><option value="大众点评" ${app.platform === '大众点评' ? 'selected' : ''}>大众点评</option><option value="美团" ${app.platform === '美团' ? 'selected' : ''}>美团</option><option value="其他" ${app.platform === '其他' ? 'selected' : ''}>其他</option></select></div>
+                </div>
+                <div class="form-row">
                     <div class="form-group"><label>金额 (¥)</label><input type="number" id="aeAmount" value="${app.amount}"></div>
+                    <div class="form-group"><label>状态</label><select id="aeStatus"><option value="pending" ${app.status === 'pending' ? 'selected' : ''}>待处理</option><option value="done" ${app.status === 'done' ? 'selected' : ''}>已完成</option></select></div>
                 </div>
             </div>
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisEditModal')">取消</button><button class="btn btn-primary" onclick="saveAnalysisEdit(${id})">保存</button></div>
@@ -3915,18 +3931,81 @@ window.saveAnalysisEdit = function(id) {
     const project = document.getElementById('aeProject').value;
     const date = document.getElementById('aeDate').value;
     const time = document.getElementById('aeTime').value;
+    const staff = document.getElementById('aeStaff').value;
     const platform = document.getElementById('aePlatform').value;
     const amount = parseFloat(document.getElementById('aeAmount').value) || 0;
+    const status = document.getElementById('aeStatus').value;
     if (!name) { showToast('请输入姓名'); return; }
     let appointments = Store.get('appointments', []);
     const idx = appointments.findIndex(a => a.id === id);
     if (idx >= 0) {
-        appointments[idx] = { ...appointments[idx], name, project, date, time, platform, amount };
+        appointments[idx] = { ...appointments[idx], name, project, date, time, staff, platform, amount, status };
         Store.set('appointments', appointments);
         showToast('已保存');
         closeModal('analysisEditModal');
         renderDataAnalysis(document.getElementById('contentArea'));
     }
+};
+
+window.openAnalysisAddModal = function() {
+    const staffList = Store.get('staff', []).map(s => s.name);
+    const staffOptions = staffList.map(s => `<option value="${s}">${s}</option>`).join('');
+    const today = getTodayStr();
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'analysisAddModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header"><h3>添加营收明细</h3><button class="close-btn" onclick="closeModal('analysisAddModal')">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>顾客姓名</label><input type="text" id="aaName" value=""></div>
+                    <div class="form-group"><label>项目</label><select id="aaProject"><option value="本甲">本甲</option><option value="甲片">甲片</option><option value="足部">足部</option><option value="美睫">美睫</option><option value="卸甲卸睫">卸甲卸睫</option><option value="护理">护理</option><option value="其他">其他</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>日期</label><input type="date" id="aaDate" value="${today}"></div>
+                    <div class="form-group"><label>时间</label><input type="time" id="aaTime" value="10:00"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>人员</label><select id="aaStaff"><option value="">-</option>${staffOptions}</select></div>
+                    <div class="form-group"><label>平台</label><select id="aaPlatform"><option value="微信">微信</option><option value="小红书">小红书</option><option value="抖音">抖音</option><option value="大众点评">大众点评</option><option value="美团">美团</option><option value="其他">其他</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>金额 (¥)</label><input type="number" id="aaAmount" value=""></div>
+                    <div class="form-group"><label>状态</label><select id="aaStatus"><option value="pending">待处理</option><option value="done">已完成</option></select></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('analysisAddModal')">取消</button><button class="btn btn-primary" onclick="saveAnalysisAdd()">保存</button></div>
+        </div>`;
+    document.body.appendChild(modal);
+};
+
+window.saveAnalysisAdd = function() {
+    const name = document.getElementById('aaName').value.trim();
+    const project = document.getElementById('aaProject').value;
+    const date = document.getElementById('aaDate').value;
+    const time = document.getElementById('aaTime').value;
+    const staff = document.getElementById('aaStaff').value;
+    const platform = document.getElementById('aaPlatform').value;
+    const amount = parseFloat(document.getElementById('aaAmount').value) || 0;
+    const status = document.getElementById('aaStatus').value;
+    if (!name) { showToast('请输入姓名'); return; }
+    let appointments = Store.get('appointments', []);
+    const newId = appointments.length > 0 ? Math.max(...appointments.map(a => a.id)) + 1 : 1;
+    appointments.push({ id: newId, name, project, date, time, staff, platform, amount, status, phone: '', wechat: '', isNew: false });
+    Store.set('appointments', appointments);
+    showToast('已添加');
+    closeModal('analysisAddModal');
+    renderDataAnalysis(document.getElementById('contentArea'));
+};
+
+window.deleteAnalysisItem = function(id) {
+    if (!confirm('确定要删除这条记录吗？')) return;
+    let appointments = Store.get('appointments', []);
+    appointments = appointments.filter(a => a.id !== id);
+    Store.set('appointments', appointments);
+    showToast('已删除');
+    renderDataAnalysis(document.getElementById('contentArea'));
 };
 
 // ==================== 初始化 ====================
